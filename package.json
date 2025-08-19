@@ -1,0 +1,37 @@
+{
+  "name": "megastore-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "migrate": "knex migrate:latest",
+    "migrate:make": "knex migrate:make",
+    "migrate:rollback": "knex migrate:rollback",
+    "seed": "knex seed:run",
+    "seed:make": "knex seed:make"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "sqlite3": "^5.1.7",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.3.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  }
+}
