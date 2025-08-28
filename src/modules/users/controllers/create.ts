@@ -3,31 +3,33 @@ import { hash } from "bcrypt";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { knex } from "../../../database/knex";
-import { User } from "../types";
+import { createUserSchema } from "../schemas/create-user";
+import { addressSchema } from "../schemas/address";
+import { createUserTransation } from "../transactions/create";
 
 const create = async (req: Request, res: Response, next: NextFunction) => {
-  const schema = z.object({
-    name: z
-      .string()
-      .min(2, { message: "Nome deve ter pelo menos 2 caracteres." })
-      .max(100, "Nome deve ter no máximo 100 caracteres."),
-    email: z.email({ message: "Email inválido." }),
-    password: z
-      .string()
-      .min(6, { message: "Senha deve ter pelo menos 6 caracteres." })
-      .max(100, { message: "Senha deve ter no máximo 100 caracteres." })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/, {
-        message:
-          "Senha deve conter pelo menos uma letra maiúscula, uma letra minúscula e um número.",
-      }),
-  });
+  const {
+    name,
+    email,
+    password,
+    phone,
+    address: { city, state, street, number, zip_code },
+  } = req.body;
 
-  const { name, email, password }: User = req.body;
+  const userValidation = createUserSchema.safeParse(req.body);
 
-  const validation = schema.safeParse(req.body);
+  const addressValidation = addressSchema.safeParse(req.body.address);
 
-  if (!validation.success) {
-    return res.status(400).json({ error: z.treeifyError(validation.error).properties });
+  if (!userValidation.success) {
+    return res
+      .status(400)
+      .json({ error: z.treeifyError(userValidation.error).properties });
+  }
+
+  if (!addressValidation.success) {
+    return res
+      .status(400)
+      .json({ error: z.treeifyError(addressValidation.error).properties });
   }
 
   const emailExists = await knex("users").where({ email }).first();
@@ -39,19 +41,30 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const hashedPassword = await hash(password, 10);
 
+    const address = {
+      id: randomUUID(),
+      street: street,
+      number: number,
+      city: city,
+      state: state,
+      zip_code: zip_code,
+    };
+
     const user = {
       id: randomUUID(),
       name,
       email,
       password: hashedPassword,
-      created_at: new Date(),
-      updated_at: null,
+      phone,
+      address_id: address.id,
     };
 
-    await knex<User>("users").insert(user);
+    await createUserTransation({ user, address });
 
-    res.status(201).json({ message: "Usuário criado com sucesso!" });
+    res.status(201).json({ message: "Usuário criado!" });
   } catch (error) {
+    console.error("❌ Erro geral:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
     next(error);
   }
 };

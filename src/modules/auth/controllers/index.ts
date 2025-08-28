@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { knex } from "../../../database/knex";
 import bcrypt from "bcrypt";
-import { User } from "../../users/types";
+import { User } from "../../users/types/user";
 import { sign } from "jsonwebtoken";
 
 const index = async (req: Request, res: Response) => {
@@ -33,15 +33,10 @@ const index = async (req: Request, res: Response) => {
       expiresIn: "1h",
     });
 
-    const formatCreatedAt = new Date(user.created_at).toISOString();
-
     const { password: _, ...userWithoutPassword } = user;
 
     res.status(200).json({
-      user: {
-        ...userWithoutPassword,
-        created_at: formatCreatedAt,
-      },
+      user: userWithoutPassword,
       token,
     });
   } catch (error) {
